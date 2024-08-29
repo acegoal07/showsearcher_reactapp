@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, View, StyleSheet, TextInput, Pressable, FlatList } from 'react-native';
+import Favicon from 'react-favicon';
 
 const fetchSettings = {
    method: 'GET',
@@ -39,6 +40,7 @@ export default function App() {
 
    return (
       <View style={styles.body_container}>
+         <Favicon url='https://raw.githubusercontent.com/acegoal07/acegoal07.github.io/master/assets/images/favicon.ico?token=GHSAT0AAAAAACTBOBAODJTZQ5QRFSQ7P22KZWQXILA' />
          <View style={styles.show_type_switch_container}>
             <Pressable
                style={(movieTypeButtonHover || movieTypeButtonPressed ? { ...styles.show_type_switch_button, backgroundColor: '#0d6efd' } : styles.show_type_switch_button)}
