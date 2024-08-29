@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, StyleSheet, TextInput, Pressable, FlatList } from 'react-native';
+import { Text, View, StyleSheet, TextInput, Pressable, FlatList, useWindowDimensions } from 'react-native';
 import Favicon from 'react-favicon';
 
 const fetchSettings = {
@@ -11,6 +11,15 @@ const fetchSettings = {
 }
 
 export default function App() {
+   let initialStyles;
+   if (window.innerWidth < 768) {
+      initialStyles = stylesS;
+   } else if (window.innerWidth < 992) {
+      initialStyles = stylesM;
+   } else {
+      initialStyles = stylesL;
+   }
+   const [styles, setStyles] = React.useState(initialStyles);
    const [searchTerm, setSearchTerm] = React.useState('');
    const [searchResults, setSearchResults] = React.useState([]);
    const [movieTypeButtonHover, setMovieTypeButtonHover] = React.useState(false);
@@ -32,11 +41,19 @@ export default function App() {
          .catch(error => console.error(error));
    }
 
-   const renderResults = () => {
-      return (
-         <Text>Results</Text>
-      );
-   };
+   // const renderResults = () => {
+   //    return (
+   //       <View style={styles.search_result_item}>
+   //          <Text>Results</Text>
+   //       </View>
+   //    );
+   // };
+
+   React.useEffect(() => {
+      if (window.innerWidth < 768) setStyles(stylesS);
+      else if (window.innerWidth < 992) setStyles(stylesM);
+      else setStyles(stylesL);
+   }, [useWindowDimensions().width]);
 
    return (
       <View style={styles.body_container}>
@@ -72,20 +89,78 @@ export default function App() {
             placeholder="Search for a movie or TV show..."
             keyboardType="default"
          />
-         <FlatList
-            style={{ width: '100%' }}
+         {/* <FlatList
+            style={styles.search_results_output_container}
             data={searchResults}
             renderItem={renderResults}
             horizontal={true}
-            keyExtractor={(item, index) => index.toString()} />
+            keyExtractor={(item, index) => index.toString()} /> */}
       </View>
    );
 };
 
-const styles = StyleSheet.create({
+
+const backgroundColor = '#1a1d20';
+const secondaryColor = '#2b3035';
+const mutedText = '#b0b5b9';
+
+const stylesS = StyleSheet.create({
    body_container: {
       height: '100%',
-      backgroundColor: '#1a1d20',
+      backgroundColor: backgroundColor,
+      alignItems: 'center'
+   },
+   show_type_switch_container: {
+      display: 'flex',
+      justifyContent: 'center',
+      maxWidth: 1200,
+      width: '95%',
+      padding: 15,
+      paddingTop: 15,
+      paddingBottom: 15,
+      margin: 15,
+      gap: 15,
+      backgroundColor: secondaryColor,
+      borderRadius: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 1, height: 3 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5
+   },
+   show_type_switch_button: {
+      padding: 8,
+      backgroundColor: 'transparent',
+      borderRadius: 5,
+      width: '100%',
+      borderColor: '#0d6efd',
+      borderWidth: 2
+   },
+   show_type_switch_button_text: {
+      fontSize: 14,
+      color: '#0d6efd',
+      textAlign: 'center'
+   },
+   search_input: {
+      maxWidth: 1200,
+      backgroundColor: secondaryColor,
+      width: '95%',
+      fontSize: 14,
+      padding: 14,
+      borderRadius: 10,
+      color: mutedText,
+      shadowColor: '#000',
+      shadowOffset: { width: 1, height: 3 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5
+   }
+});
+
+const stylesM = StyleSheet.create({
+   body_container: {
+      height: '100%',
+      backgroundColor: backgroundColor,
       alignItems: 'center'
    },
    show_type_switch_container: {
@@ -99,7 +174,7 @@ const styles = StyleSheet.create({
       paddingBottom: 20,
       margin: 20,
       gap: 20,
-      backgroundColor: '#2b3035',
+      backgroundColor: secondaryColor,
       borderRadius: 10,
       shadowColor: '#000',
       shadowOffset: { width: 1, height: 3 },
@@ -122,18 +197,70 @@ const styles = StyleSheet.create({
    },
    search_input: {
       maxWidth: 1200,
-      backgroundColor: '#2b3035',
+      backgroundColor: secondaryColor,
       width: '80%',
       fontSize: 18,
-      height: 50,
-      borderWidth: 0,
-      padding: 10,
+      padding: 18,
       borderRadius: 10,
-      color: '#b0b5b9',
+      color: mutedText,
+      shadowColor: '#000',
+      shadowOffset: { width: 1, height: 3 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5
+   }
+});
+
+const stylesL = StyleSheet.create({
+   body_container: {
+      height: '100%',
+      backgroundColor: backgroundColor,
+      alignItems: 'center'
+   },
+   show_type_switch_container: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      maxWidth: 1200,
+      width: '80%',
+      padding: 30,
+      paddingTop: 20,
+      paddingBottom: 20,
+      margin: 20,
+      gap: 20,
+      backgroundColor: secondaryColor,
+      borderRadius: 10,
       shadowColor: '#000',
       shadowOffset: { width: 1, height: 3 },
       shadowOpacity: 0.25,
       shadowRadius: 3.84,
       elevation: 5
    },
+   show_type_switch_button: {
+      padding: 8,
+      backgroundColor: 'transparent',
+      borderRadius: 5,
+      width: '50%',
+      borderColor: '#0d6efd',
+      borderWidth: 2
+   },
+   show_type_switch_button_text: {
+      fontSize: 18,
+      color: '#0d6efd',
+      textAlign: 'center'
+   },
+   search_input: {
+      maxWidth: 1200,
+      backgroundColor: secondaryColor,
+      width: '80%',
+      fontSize: 18,
+      padding: 18,
+      borderRadius: 10,
+      color: mutedText,
+      shadowColor: '#000',
+      shadowOffset: { width: 1, height: 3 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5
+   }
 });
