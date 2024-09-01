@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, StyleSheet, TextInput, Pressable, FlatList, useWindowDimensions } from 'react-native';
+import { Text, View, StyleSheet, TextInput, Pressable, FlatList, useWindowDimensions, Image, Dimensions } from 'react-native';
 import Favicon from 'react-favicon';
 
 const fetchSettings = {
@@ -30,29 +30,49 @@ export default function App() {
 
    const searchForShow = async (query: React.SetStateAction<string>) => {
       setSearchTerm(query);
-      if (query.length < 1) return;
-
-      fetch(showType == 'movie' ? `https://api.themoviedb.org/3/search/movie?query=${searchTerm}&include_adult=true&page=1` : `https://api.themoviedb.org/3/search/tv?query=${searchTerm}&include_adult=true&page=1`, fetchSettings)
+      if (query.length == 0) return;
+      await fetch(showType == 'movie' ? `https://api.themoviedb.org/3/search/movie?query=${searchTerm}&include_adult=true&page=1` : `https://api.themoviedb.org/3/search/tv?query=${searchTerm}&include_adult=true&page=1`, fetchSettings)
          .then(response => {
             if (!response.ok) throw new Error('Failed to fetch data');
-            return response.json()
+            return response.json();
          })
-         .then(data => setSearchResults(data.results || []))
+         .then(data => {
+            setSearchResults(data.results || []);
+         })
          .catch(error => console.error(error));
    }
 
-   // const renderResults = () => {
-   //    return (
-   //       <View style={styles.search_result_item}>
-   //          <Text>Results</Text>
-   //       </View>
-   //    );
-   // };
+   const renderSearchResults = ({ item }) => {
+      if (!item.poster_path) {
+         return (
+            <View style={styles.search_result_item_container}>
+               <Text style={styles.search_result_item_text}>{item.title || item.name || item.original_title || item.original_name}</Text>
+               <Text style={styles.search_result_item_text}>{convertDate(item.release_date || item.first_air_date)}</Text>
+               <Text style={styles.search_result_item_text}>{item.overview ? `${item.overview.substring(0, 150)} ...` : 'No overview available'}</Text>
+            </View>
+         )
+      } else {
+         return (
+            <View style={styles.search_result_item_container}>
+               <Image
+                  style={styles.search_result_item_image}
+                  source={{
+                     uri: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
+                  }}
+               />
+            </View>
+         )
+      }
+   };
 
    React.useEffect(() => {
-      if (window.innerWidth < 768) setStyles(stylesS);
-      else if (window.innerWidth < 992) setStyles(stylesM);
-      else setStyles(stylesL);
+      searchForShow(searchTerm);
+   }, [showType]);
+
+   React.useEffect(() => {
+      if (window.innerWidth < 768) { setStyles(stylesS); }
+      else if (window.innerWidth < 992) { setStyles(stylesM); }
+      else { setStyles(stylesL); }
    }, [useWindowDimensions().width]);
 
    return (
@@ -89,16 +109,25 @@ export default function App() {
             placeholder="Search for a movie or TV show..."
             keyboardType="default"
          />
-         {/* <FlatList
+         <FlatList
             style={styles.search_results_output_container}
+            numColumns={3}
             data={searchResults}
-            renderItem={renderResults}
-            horizontal={true}
-            keyExtractor={(item, index) => index.toString()} /> */}
+            renderItem={renderSearchResults} />
       </View>
    );
 };
 
+/**
+ * Converts the date to a readable format
+ * @param {String} date The date to convert
+ * @returns {String} The date in a readable format
+ */
+function convertDate(date: string) {
+   const dateObj = new Date(date);
+   if (dateObj.toString() === 'Invalid Date') { return 'No release date available'; }
+   return dateObj.toLocaleDateString(new Intl.DateTimeFormat(navigator.language).resolvedOptions().locale);
+}
 
 const backgroundColor = '#1a1d20';
 const secondaryColor = '#2b3035';
@@ -262,5 +291,38 @@ const stylesL = StyleSheet.create({
       shadowOpacity: 0.25,
       shadowRadius: 3.84,
       elevation: 5
+   },
+   search_results_output_container: {
+      display: 'flex',
+      alignContent: 'center',
+      maxWidth: 1200,
+      width: '80%',
+      marginTop: 20,
+      paddingBottom: 20,
+      borderRadius: 10
+   },
+   search_result_item_container: {
+      width: '33%',
+      padding: 10,
+      margin: 'auto',
+      marginBottom: 4,
+      resizeMode: 'cover',
+      aspectRatio: 1,
+      backgroundColor: secondaryColor,
+      borderRadius: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 1, height: 3 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+      justifyContent: 'center',
+   },
+   search_result_item_text: {
+      color: mutedText,
+      textAlign: 'center'
+   },
+   search_result_item_image: {
+      resizeMode: 'contain',
+      aspectRatio: 1
    }
 });
