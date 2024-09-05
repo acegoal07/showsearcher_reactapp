@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, StyleSheet, TextInput, Pressable, FlatList, useWindowDimensions, Image } from 'react-native';
+import { Text, View, StyleSheet, TextInput, Pressable, FlatList, useWindowDimensions, Image, Modal, TouchableOpacity, Alert } from 'react-native';
 import Favicon from 'react-favicon';
 
 const fetchSettings = {
@@ -20,23 +20,23 @@ export default function App() {
    const [tvShowTypeButtonHover, setTvShowTypeButtonHover] = React.useState(false);
    const [tvShowTypeButtonPressed, setTvShowTypeButtonPressed] = React.useState(false);
    const [showType, setShowType] = React.useState('movie');
+   const [resultModalVisible, setResultModalVisible] = React.useState(false);
+   const [selectedResult, setSelectedResult] = React.useState({});
 
    /**
     * Updates the search results based on the search query
-    * @param {React.SetStateAction<String>} query The search query
+    * @param {React.SetStateAction<string>} query The search query
     */
-   const searchForShow = async (query) => {
+   const searchForShow = (query) => {
       setSearchTerm(query);
       console.log(query);
       if (query.length < 1) {
          setSearchResults([]);
          return;
       }
-      await fetch(showType == 'movie' ? `https://api.themoviedb.org/3/search/movie?query=${searchTerm}&include_adult=true&page=1` : `https://api.themoviedb.org/3/search/tv?query=${searchTerm}&include_adult=true&page=1`, fetchSettings)
+      fetch(showType == 'movie' ? `https://api.themoviedb.org/3/search/movie?query=${searchTerm}&include_adult=true&page=1` : `https://api.themoviedb.org/3/search/tv?query=${searchTerm}&include_adult=true&page=1`, fetchSettings)
          .then(response => {
-            if (!response.ok) {
-               throw new Error('Failed to fetch data');
-            }
+            if (!response.ok) { throw new Error('Failed to fetch data'); }
             return response.json();
          })
          .then(data => {
@@ -45,42 +45,62 @@ export default function App() {
          .catch(error => console.error(error));
    }
 
+   /**
+    * Renders the search results
+    * @param {any} item The item to render
+    * @returns {JSX.Element} The search result
+    */
    const renderSearchResults = ({ item }) => {
       if (!item.poster_path) {
          return (
             <View style={styles.search_result_item_container_padded}>
-               <Text style={{ ...styles.search_result_item_text, fontWeight: 'bold', fontSize: 25, color: '#fff' }}>{item.title || item.name || item.original_title || item.original_name}</Text>
-               <Text style={styles.search_result_item_text}>{convertDate(item.release_date || item.first_air_date)}</Text>
-               <Text style={styles.search_result_item_text}>{item.overview ? `${item.overview.substring(0, 150)} ...` : 'No overview available'}</Text>
-               <Text style={{ ...styles.search_result_item_text, fontWeight: 'bold', color: '#fff' }}>{'Click to show more'}</Text>
+               <TouchableOpacity
+                  style={{ flex: 1, justifyContent: 'center' }}
+                  onPress={() => {
+                     setSelectedResult(item);
+                     setResultModalVisible(true);
+                  }}>
+                  <Text style={{ ...styles.search_result_item_text, fontWeight: 'bold', fontSize: 25, color: '#fff' }}>{item.title || item.name || item.original_title || item.original_name}</Text>
+                  <Text style={styles.search_result_item_text}>{convertDate(item.release_date || item.first_air_date)}</Text>
+                  <Text style={styles.search_result_item_text}>{item.overview ? `${item.overview.substring(0, 150)} ...` : 'No overview available'}</Text>
+                  <Text style={{ ...styles.search_result_item_text, fontWeight: 'bold', color: '#fff' }}>{'Click to show more'}</Text>
+               </TouchableOpacity>
             </View>
          )
       } else {
          return (
             <View style={styles.search_result_item_container}>
-               <Image
-                  style={styles.search_result_item_image}
-                  source={{
-                     uri: `https://image.tmdb.org/t/p/w500${item.poster_path}`
-                  }}
-                  alt={item.title || item.name || item.original_title || item.original_name}
-                  referrerPolicy='no-referrer'
-               />
+               <TouchableOpacity onPress={async () => {
+                  setSelectedResult(item);
+                  setResultModalVisible(true);
+               }}>
+                  <Image
+                     style={styles.search_result_item_image}
+                     source={{
+                        uri: `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                     }}
+                     alt={item.title || item.name || item.original_title || item.original_name}
+                     referrerPolicy='no-referrer'
+                  />
+               </TouchableOpacity >
             </View>
          )
       }
    };
 
+   // Watches for a change in the show type and searches if it does
    React.useEffect(() => {
       searchForShow(searchTerm);
    }, [showType]);
 
+   // Watches for a change in the search term and searches if it does after a delay
    React.useEffect(() => {
       const query = searchTerm;
       const timeoutId = setTimeout(() => searchForShow(query), 150);
       return () => clearTimeout(timeoutId);
    }, [searchTerm]);
 
+   // Watches for a change in the window width and adjusts the styles accordingly
    React.useEffect(() => {
       if (window.innerWidth < 600) {
          setNumColumns(1);
@@ -89,10 +109,12 @@ export default function App() {
       else if (window.innerWidth < 992) {
          setNumColumns(2);
          setStyles(stylesM);
-      }
-      else {
+      } else if (window.innerWidth < 1200) {
          setNumColumns(3);
          setStyles(stylesL);
+      } else {
+         setNumColumns(4);
+         setStyles(stylesXL);
       }
    }, [useWindowDimensions().width]);
 
@@ -100,6 +122,38 @@ export default function App() {
       <View style={styles.body_container}>
          <Favicon url='https://raw.githubusercontent.com/acegoal07/acegoal07.github.io/master/assets/images/favicon.ico?token=GHSAT0AAAAAACTBOBAODJTZQ5QRFSQ7P22KZWQXILA' />
          <View style={styles.show_type_switch_container}>
+            <Modal
+               animationType="fade"
+               visible={resultModalVisible}
+               transparent={true}
+               onRequestClose={() => {
+                  Alert.alert('Modal has been closed.');
+                  setSelectedResult({});
+                  setResultModalVisible(!resultModalVisible);
+               }}>
+               <View style={styles.modalBackground}>
+                  <View style={styles.modalBody}>
+                     <Pressable
+                        style={styles.modalCloseText}
+                        onPress={() => {
+                           setSelectedResult({});
+                           setResultModalVisible(!resultModalVisible);
+                        }}>
+                        &times;
+                     </Pressable>
+                     <Text style={{ ...styles.modalHeader, marginRight: 22 }}>{selectedResult.title || selectedResult.name || selectedResult.original_title || selectedResult.original_name}</Text>
+                     <View style={universalStyles.divider}></View>
+                     <Text style={styles.modalHeader}>Release Date:</Text>
+                     <Text style={styles.modalText}>{convertDate(selectedResult.release_date || selectedResult.first_air_date)}</Text>
+                     <View style={universalStyles.divider}></View>
+                     <Text style={styles.modalHeader}>Rating:</Text>
+                     <Text style={styles.modalText}>{parseFloat(selectedResult.vote_average).toFixed(1) || 'No rating available'}</Text>
+                     <View style={universalStyles.divider}></View>
+                     <Text style={styles.modalHeader}>Overview:</Text>
+                     <Text style={styles.modalText}>{selectedResult.overview || 'No overview available'}</Text>
+                  </View>
+               </View>
+            </Modal>
             <Pressable
                style={(movieTypeButtonHover || movieTypeButtonPressed ? { ...styles.show_type_switch_button, backgroundColor: '#0d6efd' } : styles.show_type_switch_button)}
                onHoverIn={() => setMovieTypeButtonHover(true)}
@@ -122,14 +176,12 @@ export default function App() {
                }}>
                <Text style={(tvShowTypeButtonHover || tvShowTypeButtonPressed ? { ...styles.show_type_switch_button_text, color: '#fff' } : styles.show_type_switch_button_text)}>TV-Shows</Text>
             </Pressable>
-         </View>
+         </View >
          <TextInput
             style={(searchTerm.length != 0 ? { ...styles.search_input, color: '#fff' } : styles.search_input)}
             value={searchTerm}
             onChangeText={setSearchTerm}
-            placeholder="Search for a movie or TV show..."
-            keyboardType="default"
-         />
+            placeholder="Search for a movie or TV show..." />
          <FlatList
             key={numColumns}
             style={styles.search_results_output_container}
@@ -158,11 +210,74 @@ const secondaryColor = '#2b3035';
 const mutedText = '#b0b5b9';
 const buttonColor = '#0d6efd';
 
-const stylesS = StyleSheet.create({
+const universalStyles = StyleSheet.create({
    body_container: {
       height: '100%',
       backgroundColor,
       alignItems: 'center'
+   },
+   normalShadow: {
+      shadowColor: '#000',
+      shadowOffset: { width: 1, height: 3 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5
+   },
+   divider: {
+      width: '100%',
+      borderColor: '#4a4e52',
+      borderWidth: 1,
+      marginBottom: 10,
+      marginTop: 10
+   },
+   search_result_item_text: {
+      color: mutedText,
+      textAlign: 'center',
+      padding: 5
+   },
+   search_result_item_image: {
+      aspectRatio: 0.7,
+      borderRadius: 10
+   },
+   modalBackground: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.7)'
+   },
+   modalBody: {
+      display: 'flex',
+      maxWidth: 1000,
+      margin: 20,
+      backgroundColor: secondaryColor,
+      borderRadius: 20,
+      padding: 15,
+      overflow: 'auto',
+   },
+   modalHeader: {
+      fontSize: 22,
+      marginBottom: 5,
+      marginLeft: 10,
+      color: '#fff',
+      fontWeight: 'bold'
+   },
+   modalText: {
+      fontSize: 16,
+      marginLeft: 10,
+      color: '#fff'
+   },
+   modalCloseText: {
+      position: 'absolute',
+      color: mutedText,
+      fontSize: 40,
+      lineHeight: 25,
+      alignSelf: 'flex-end'
+   }
+});
+
+const stylesS = StyleSheet.create({
+   body_container: {
+      ...universalStyles.body_container
    },
    show_type_switch_container: {
       display: 'flex',
@@ -176,11 +291,7 @@ const stylesS = StyleSheet.create({
       gap: 15,
       backgroundColor: secondaryColor,
       borderRadius: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5
+      ...universalStyles.normalShadow
    },
    show_type_switch_button: {
       padding: 8,
@@ -203,11 +314,7 @@ const stylesS = StyleSheet.create({
       padding: 14,
       borderRadius: 10,
       color: mutedText,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5
+      ...universalStyles.normalShadow
    },
    search_results_output_container: {
       display: 'flex',
@@ -222,11 +329,7 @@ const stylesS = StyleSheet.create({
       backgroundColor: secondaryColor,
       marginBottom: 4,
       borderRadius: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5
+      ...universalStyles.normalShadow
    },
    search_result_item_container_padded: {
       width: '100%',
@@ -236,29 +339,37 @@ const stylesS = StyleSheet.create({
       aspectRatio: 0.7,
       backgroundColor: secondaryColor,
       borderRadius: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5,
-      justifyContent: 'center'
+      justifyContent: 'center',
+      ...universalStyles.normalShadow
    },
    search_result_item_text: {
-      color: mutedText,
-      textAlign: 'center',
-      padding: 5
+      ...universalStyles.search_result_item_text
    },
    search_result_item_image: {
-      aspectRatio: 0.7,
-      borderRadius: 10
+      ...universalStyles.search_result_item_image
+   },
+   modalBackground: {
+      ...universalStyles.modalBackground
+   },
+   modalBody: {
+      ...universalStyles.modalBody,
+      width: '95%',
+      height: '95%'
+   },
+   modalHeader: {
+      ...universalStyles.modalHeader
+   },
+   modalText: {
+      ...universalStyles.modalText
+   },
+   modalCloseText: {
+      ...universalStyles.modalCloseText
    }
 });
 
 const stylesM = StyleSheet.create({
    body_container: {
-      height: '100%',
-      backgroundColor,
-      alignItems: 'center'
+      ...universalStyles.body_container
    },
    show_type_switch_container: {
       display: 'flex',
@@ -273,11 +384,7 @@ const stylesM = StyleSheet.create({
       gap: 20,
       backgroundColor: secondaryColor,
       borderRadius: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5
+      ...universalStyles.normalShadow
    },
    show_type_switch_button: {
       padding: 8,
@@ -300,11 +407,7 @@ const stylesM = StyleSheet.create({
       padding: 18,
       borderRadius: 10,
       color: mutedText,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5
+      ...universalStyles.normalShadow
    },
    search_results_output_container: {
       display: 'flex',
@@ -319,43 +422,46 @@ const stylesM = StyleSheet.create({
       backgroundColor: secondaryColor,
       marginBottom: 4,
       borderRadius: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5
+      ...universalStyles.normalShadow
    },
    search_result_item_container_padded: {
       width: '49%',
-      padding: 10,
       margin: 'auto',
-      marginBottom: 4,
-      aspectRatio: 0.7,
       backgroundColor: secondaryColor,
+      marginBottom: 4,
       borderRadius: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5,
+      padding: 10,
+      aspectRatio: 0.7,
       justifyContent: 'center'
    },
    search_result_item_text: {
-      color: mutedText,
-      textAlign: 'center',
-      padding: 5
+      ...universalStyles.search_result_item_text
    },
    search_result_item_image: {
-      aspectRatio: 0.7,
-      borderRadius: 10
+      ...universalStyles.search_result_item_image
+   },
+   modalBackground: {
+      ...universalStyles.modalBackground
+   },
+   modalBody: {
+      ...universalStyles.modalBody,
+      width: '75%',
+      height: '85%'
+   },
+   modalHeader: {
+      ...universalStyles.modalHeader
+   },
+   modalText: {
+      ...universalStyles.modalText
+   },
+   modalCloseText: {
+      ...universalStyles.modalCloseText
    }
 });
 
 const stylesL = StyleSheet.create({
    body_container: {
-      height: '100%',
-      backgroundColor,
-      alignItems: 'center'
+      ...universalStyles.body_container
    },
    show_type_switch_container: {
       display: 'flex',
@@ -370,11 +476,7 @@ const stylesL = StyleSheet.create({
       gap: 20,
       backgroundColor: secondaryColor,
       borderRadius: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5
+      ...universalStyles.normalShadow
    },
    show_type_switch_button: {
       padding: 8,
@@ -397,11 +499,7 @@ const stylesL = StyleSheet.create({
       padding: 18,
       borderRadius: 10,
       color: mutedText,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5
+      ...universalStyles.normalShadow
    },
    search_results_output_container: {
       display: 'flex',
@@ -416,34 +514,131 @@ const stylesL = StyleSheet.create({
       backgroundColor: secondaryColor,
       marginBottom: 4,
       borderRadius: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5
+      ...universalStyles.normalShadow
    },
    search_result_item_container_padded: {
       width: '32%',
-      padding: 10,
       margin: 'auto',
-      marginBottom: 4,
-      aspectRatio: 0.7,
       backgroundColor: secondaryColor,
+      marginBottom: 4,
       borderRadius: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 1, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.84,
-      elevation: 5,
+      padding: 10,
+      aspectRatio: 0.7,
       justifyContent: 'center'
    },
    search_result_item_text: {
-      color: mutedText,
-      textAlign: 'center',
-      padding: 5
+      ...universalStyles.search_result_item_text
    },
    search_result_item_image: {
+      ...universalStyles.search_result_item_image
+   },
+   modalBackground: {
+      ...universalStyles.modalBackground
+   },
+   modalBody: {
+      ...universalStyles.modalBody,
+      width: '60%',
+      height: '60%'
+   },
+   modalHeader: {
+      ...universalStyles.modalHeader
+   },
+   modalText: {
+      ...universalStyles.modalText
+   },
+   modalCloseText: {
+      ...universalStyles.modalCloseText
+   }
+});
+
+const stylesXL = StyleSheet.create({
+   body_container: {
+      ...universalStyles.body_container
+   },
+   show_type_switch_container: {
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      maxWidth: 1200,
+      width: '80%',
+      padding: 30,
+      paddingTop: 20,
+      paddingBottom: 20,
+      margin: 20,
+      gap: 20,
+      backgroundColor: secondaryColor,
+      borderRadius: 10,
+      ...universalStyles.normalShadow
+   },
+   show_type_switch_button: {
+      padding: 8,
+      backgroundColor: 'transparent',
+      borderRadius: 5,
+      width: '50%',
+      borderColor: buttonColor,
+      borderWidth: 2
+   },
+   show_type_switch_button_text: {
+      fontSize: 18,
+      color: buttonColor,
+      textAlign: 'center'
+   },
+   search_input: {
+      maxWidth: 1200,
+      backgroundColor: secondaryColor,
+      width: '80%',
+      fontSize: 18,
+      padding: 18,
+      borderRadius: 10,
+      color: mutedText,
+      ...universalStyles.normalShadow
+   },
+   search_results_output_container: {
+      display: 'flex',
+      maxWidth: 1200,
+      width: '80%',
+      marginTop: 20,
+      marginBottom: 20
+   },
+   search_result_item_container: {
+      width: '24%',
+      margin: 'auto',
+      backgroundColor: secondaryColor,
+      marginBottom: 4,
+      borderRadius: 10,
+      ...universalStyles.normalShadow
+   },
+   search_result_item_container_padded: {
+      width: '24%',
+      margin: 'auto',
+      backgroundColor: secondaryColor,
+      marginBottom: 4,
+      borderRadius: 10,
+      padding: 10,
       aspectRatio: 0.7,
-      borderRadius: 10
+      justifyContent: 'center'
+   },
+   search_result_item_text: {
+      ...universalStyles.search_result_item_text
+   },
+   search_result_item_image: {
+      ...universalStyles.search_result_item_image
+   },
+   modalBackground: {
+      ...universalStyles.modalBackground
+   },
+   modalBody: {
+      ...universalStyles.modalBody,
+      width: '60%',
+      height: '60%'
+   },
+   modalHeader: {
+      ...universalStyles.modalHeader
+   },
+   modalText: {
+      ...universalStyles.modalText
+   },
+   modalCloseText: {
+      ...universalStyles.modalCloseText
    }
 });
