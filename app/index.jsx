@@ -22,6 +22,8 @@ export default function App() {
    const [showType, setShowType] = React.useState('movie');
    const [resultModalVisible, setResultModalVisible] = React.useState(false);
    const [selectedResult, setSelectedResult] = React.useState({});
+   const [genreData, setGenreData] = React.useState('');
+   const [loadedResultData, setLoadedResultData] = React.useState(false);
 
    /**
     * Updates the search results based on the search query
@@ -46,6 +48,30 @@ export default function App() {
    }
 
    /**
+    * Handles the genre data for the selected item
+    * @param {any} item The selected item
+    */
+   const handleLoadResultData = async (item) => {
+      fetch(showType === 'movie' ? `https://api.themoviedb.org/3/genre/movie/list?language=en` : `https://api.themoviedb.org/3/genre/tv/list?language=en`, fetchSettings)
+         .then(res => {
+            if (!res.ok) { throw new Error('Network response was not ok'); }
+            else { return res.json(); }
+         })
+         .then(genreData => {
+            const genres = [];
+            item.genre_ids.forEach(genreId => {
+               const returnGenre = genreData.genres.find(e => e.id === genreId);
+               if (returnGenre) {
+                  genres.push(returnGenre.name);
+               }
+            });
+            setGenreData(genres.join(', '));
+         })
+         .catch(error => console.error(error));
+      setLoadedResultData(true);
+   }
+
+   /**
     * Renders the search results
     * @param {any} item The item to render
     * @returns {JSX.Element} The search result
@@ -58,7 +84,7 @@ export default function App() {
                   style={{ flex: 1, justifyContent: 'center' }}
                   onPress={() => {
                      setSelectedResult(item);
-                     setResultModalVisible(true);
+                     handleLoadResultData(item);
                   }}>
                   <Text style={{ ...styles.search_result_item_text, fontWeight: 'bold', fontSize: 25, color: '#fff' }}>{item.title || item.name || item.original_title || item.original_name}</Text>
                   <Text style={styles.search_result_item_text}>{convertDate(item.release_date || item.first_air_date)}</Text>
@@ -70,9 +96,9 @@ export default function App() {
       } else {
          return (
             <View style={styles.search_result_item_container}>
-               <TouchableOpacity onPress={async () => {
+               <TouchableOpacity onPress={() => {
                   setSelectedResult(item);
-                  setResultModalVisible(true);
+                  handleLoadResultData(item);
                }}>
                   <Image
                      style={styles.search_result_item_image}
@@ -118,6 +144,15 @@ export default function App() {
       }
    }, [useWindowDimensions().width]);
 
+   // 
+   React.useEffect(() => {
+      if (loadedResultData) {
+         setResultModalVisible(true);
+         setLoadedResultData(false);
+         setGenreData('');
+      }
+   }, [loadedResultData]);
+
    return (
       <View style={styles.body_container}>
          <Favicon url='https://raw.githubusercontent.com/acegoal07/acegoal07.github.io/master/assets/images/favicon.ico?token=GHSAT0AAAAAACTBOBAODJTZQ5QRFSQ7P22KZWQXILA' />
@@ -130,6 +165,7 @@ export default function App() {
                   Alert.alert('Modal has been closed.');
                   setSelectedResult({});
                   setResultModalVisible(!resultModalVisible);
+                  setGenreData('');
                }}>
                <View style={styles.modalBackground}>
                   <View style={styles.modalBody}>
@@ -138,6 +174,7 @@ export default function App() {
                         onPress={() => {
                            setSelectedResult({});
                            setResultModalVisible(!resultModalVisible);
+                           setGenreData('');
                         }}>
                         &times;
                      </Pressable>
@@ -148,6 +185,9 @@ export default function App() {
                      <View style={universalStyles.divider}></View>
                      <Text style={styles.modalHeader}>Rating:</Text>
                      <Text style={styles.modalText}>{parseFloat(selectedResult.vote_average).toFixed(1) || 'No rating available'}</Text>
+                     <View style={universalStyles.divider}></View>
+                     <Text style={styles.modalHeader}>Genres:</Text>
+                     <Text style={styles.modalText}>{genreData || 'No genres available'}</Text>
                      <View style={universalStyles.divider}></View>
                      <Text style={styles.modalHeader}>Overview:</Text>
                      <Text style={styles.modalText}>{selectedResult.overview || 'No overview available'}</Text>
