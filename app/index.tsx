@@ -12,18 +12,10 @@ import {
   Alert,
 } from 'react-native';
 
+import { buttonColor } from '~/constants/colours';
 import DateFormatter from '~/constants/dateFormatter';
 import { stylesS, stylesM, stylesL, stylesXL, universalStyles } from '~/constants/stylesheet';
-import { buttonColor } from '~/constants/colours';
-
-const fetchSettings = {
-  method: 'GET',
-  headers: {
-    accept: 'application/json',
-    Authorization:
-      'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1Yzk4MTAxNjk0OTQ2MmE4NmJlNTA2NTc2Yjg1ZjZlNCIsInN1YiI6IjY2MjFkMDY1Y2NkZTA0MDE4ODA2NDA4MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.xUExDZr1UbIizmXNPNqotICIYYKTQfRltq2uIgq9qjI',
-  },
-};
+import { searchForShows, convertGenreIdsToNames } from '~/constants/tmdb';
 
 export default function App() {
   const [styles, setStyles] = React.useState(stylesL);
@@ -41,62 +33,11 @@ export default function App() {
   const [loadedResultData, setLoadedResultData] = React.useState(false);
 
   /**
-   * Updates the search results based on the search query
-   * @param {React.SetStateAction<string>} query The search query
-   */
-  const searchForShow = (query: React.SetStateAction<string>) => {
-    setSearchTerm(query);
-    if (query.length < 1) {
-      setSearchResults([]);
-      return;
-    }
-    fetch(
-      showType === 'movie'
-        ? `https://api.themoviedb.org/3/search/movie?query=${searchTerm}&include_adult=true&page=1`
-        : `https://api.themoviedb.org/3/search/tv?query=${searchTerm}&include_adult=true&page=1`,
-      fetchSettings
-    )
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setSearchResults(data.results || []);
-      })
-      .catch((error) => console.error(error));
-  };
-
-  /**
    * Handles the genre data for the selected item
    * @param {any} item The selected item
    */
   const handleLoadResultData = async (item: any) => {
-    fetch(
-      showType === 'movie'
-        ? `https://api.themoviedb.org/3/genre/movie/list?language=en`
-        : `https://api.themoviedb.org/3/genre/tv/list?language=en`,
-      fetchSettings
-    )
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Network response was not ok');
-        } else {
-          return res.json();
-        }
-      })
-      .then((genreData) => {
-        const genres: any[] = [];
-        item.genre_ids.forEach((genreId: any) => {
-          const returnGenre = genreData.genres.find((e: { id: any }) => e.id === genreId);
-          if (returnGenre) {
-            genres.push(returnGenre.name);
-          }
-        });
-        setGenreData(genres.join(', '));
-      })
-      .catch((error) => console.error(error));
+    convertGenreIdsToNames(showType, item.genre_ids, setGenreData);
     setLoadedResultData(true);
   };
 
@@ -160,13 +101,15 @@ export default function App() {
 
   // Watches for a change in the show type and searches if it does
   React.useEffect(() => {
-    searchForShow(searchTerm);
+    searchForShows(searchTerm, showType, setSearchTerm, setSearchResults);
   }, [showType]);
 
   // Watches for a change in the search term and searches if it does after a delay
   React.useEffect(() => {
-    const query = searchTerm;
-    const timeoutId = setTimeout(() => searchForShow(query), 150);
+    const timeoutId = setTimeout(
+      () => searchForShows(searchTerm, showType, setSearchTerm, setSearchResults),
+      150
+    );
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
