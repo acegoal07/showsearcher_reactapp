@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Text,
   View,
-  StyleSheet,
   TextInput,
   Pressable,
   FlatList,
@@ -12,6 +11,10 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+
+import DateFormatter from '~/constants/dateFormatter';
+import { stylesS, stylesM, stylesL, stylesXL, universalStyles } from '~/constants/stylesheet';
+import { buttonColor } from '~/constants/colours';
 
 const fetchSettings = {
   method: 'GET',
@@ -122,7 +125,7 @@ export default function App() {
               {item.title || item.name || item.original_title || item.original_name}
             </Text>
             <Text style={styles.search_result_item_text}>
-              {convertDate(item.release_date || item.first_air_date)}
+              {DateFormatter(item.release_date || item.first_air_date)}
             </Text>
             <Text style={styles.search_result_item_text}>
               {item.overview ? `${item.overview.substring(0, 150)} ...` : 'No overview available'}
@@ -226,7 +229,7 @@ export default function App() {
               <View style={universalStyles.divider} />
               <Text style={styles.modalHeader}>Release Date:</Text>
               <Text style={styles.modalText}>
-                {convertDate(selectedResult.release_date || selectedResult.first_air_date)}
+                {DateFormatter(selectedResult.release_date || selectedResult.first_air_date)}
               </Text>
               <View style={universalStyles.divider} />
               <Text style={styles.modalHeader}>Rating:</Text>
@@ -247,7 +250,7 @@ export default function App() {
         <Pressable
           style={
             movieTypeButtonHover || movieTypeButtonPressed
-              ? { ...styles.show_type_switch_button, backgroundColor: '#0d6efd' }
+              ? { ...styles.show_type_switch_button, backgroundColor: buttonColor }
               : styles.show_type_switch_button
           }
           onHoverIn={() => setMovieTypeButtonHover(true)}
@@ -271,7 +274,7 @@ export default function App() {
         <Pressable
           style={
             tvShowTypeButtonHover || tvShowTypeButtonPressed
-              ? { ...styles.show_type_switch_button, backgroundColor: '#0d6efd' }
+              ? { ...styles.show_type_switch_button, backgroundColor: buttonColor }
               : styles.show_type_switch_button
           }
           onHoverIn={() => setTvShowTypeButtonHover(true)}
@@ -317,457 +320,3 @@ export default function App() {
     </View>
   );
 }
-
-/**
- * Converts the date to a readable format
- * @param {String} date The date to convert
- * @returns {String} The date in a readable format
- */
-function convertDate(date: string) {
-  const dateObj = new Date(date);
-  if (dateObj.toString() === 'Invalid Date') {
-    return 'No release date available';
-  }
-  return dateObj.toLocaleDateString(
-    new Intl.DateTimeFormat(navigator.language).resolvedOptions().locale
-  );
-}
-
-const backgroundColor = '#1a1d20';
-const secondaryColor = '#2b3035';
-const mutedText = '#b0b5b9';
-const buttonColor = '#0d6efd';
-
-const universalStyles = StyleSheet.create({
-  body_container: {
-    height: '100%',
-    backgroundColor,
-    alignItems: 'center',
-    overflow: 'scroll',
-  },
-  normalShadow: {
-    shadowColor: '#000',
-    shadowOffset: { width: 1, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  divider: {
-    width: '100%',
-    borderColor: '#4a4e52',
-    borderWidth: 1,
-    marginBottom: 10,
-    marginTop: 10,
-  },
-  search_result_item_text: {
-    color: mutedText,
-    textAlign: 'center',
-    padding: 5,
-  },
-  search_result_item_image: {
-    aspectRatio: 0.7,
-    borderRadius: 10,
-  },
-  modalBackground: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  modalBody: {
-    display: 'flex',
-    maxWidth: 1000,
-    margin: 20,
-    backgroundColor: secondaryColor,
-    borderRadius: 20,
-    padding: 15,
-    overflow: 'auto',
-  },
-  modalHeader: {
-    fontSize: 22,
-    marginBottom: 5,
-    marginLeft: 10,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  modalText: {
-    fontSize: 16,
-    marginLeft: 10,
-    color: '#fff',
-  },
-  modalCloseText: {
-    position: 'absolute',
-    color: mutedText,
-    fontSize: 40,
-    lineHeight: 25,
-    alignSelf: 'flex-end',
-  },
-});
-
-const stylesS = StyleSheet.create({
-  body_container: {
-    ...universalStyles.body_container,
-  },
-  show_type_switch_container: {
-    display: 'flex',
-    justifyContent: 'center',
-    maxWidth: 1200,
-    width: '95%',
-    padding: 15,
-    paddingTop: 15,
-    paddingBottom: 15,
-    margin: 15,
-    gap: 15,
-    backgroundColor: secondaryColor,
-    borderRadius: 10,
-    ...universalStyles.normalShadow,
-  },
-  show_type_switch_button: {
-    padding: 8,
-    backgroundColor: 'transparent',
-    borderRadius: 5,
-    width: '100%',
-    borderColor: buttonColor,
-    borderWidth: 2,
-  },
-  show_type_switch_button_text: {
-    fontSize: 14,
-    color: buttonColor,
-    textAlign: 'center',
-  },
-  search_input: {
-    maxWidth: 1200,
-    backgroundColor: secondaryColor,
-    width: '95%',
-    fontSize: 14,
-    padding: 14,
-    borderRadius: 10,
-    color: mutedText,
-    ...universalStyles.normalShadow,
-  },
-  search_results_output_container: {
-    display: 'flex',
-    maxWidth: 1200,
-    width: '80%',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  search_result_item_container: {
-    width: '100%',
-    margin: 'auto',
-    backgroundColor: secondaryColor,
-    marginBottom: 4,
-    borderRadius: 10,
-    ...universalStyles.normalShadow,
-  },
-  search_result_item_container_padded: {
-    width: '100%',
-    padding: 10,
-    margin: 'auto',
-    marginBottom: 4,
-    aspectRatio: 0.7,
-    backgroundColor: secondaryColor,
-    borderRadius: 10,
-    justifyContent: 'center',
-    ...universalStyles.normalShadow,
-  },
-  search_result_item_text: {
-    ...universalStyles.search_result_item_text,
-  },
-  search_result_item_image: {
-    ...universalStyles.search_result_item_image,
-  },
-  modalBackground: {
-    ...universalStyles.modalBackground,
-  },
-  modalBody: {
-    ...universalStyles.modalBody,
-    width: '95%',
-    height: '95%',
-  },
-  modalHeader: {
-    ...universalStyles.modalHeader,
-  },
-  modalText: {
-    ...universalStyles.modalText,
-  },
-  modalCloseText: {
-    ...universalStyles.modalCloseText,
-  },
-});
-
-const stylesM = StyleSheet.create({
-  body_container: {
-    ...universalStyles.body_container,
-  },
-  show_type_switch_container: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    maxWidth: 1200,
-    width: '80%',
-    padding: 30,
-    paddingTop: 20,
-    paddingBottom: 20,
-    margin: 20,
-    gap: 20,
-    backgroundColor: secondaryColor,
-    borderRadius: 10,
-    ...universalStyles.normalShadow,
-  },
-  show_type_switch_button: {
-    padding: 8,
-    backgroundColor: 'transparent',
-    borderRadius: 5,
-    width: '50%',
-    borderColor: buttonColor,
-    borderWidth: 2,
-  },
-  show_type_switch_button_text: {
-    fontSize: 18,
-    color: buttonColor,
-    textAlign: 'center',
-  },
-  search_input: {
-    maxWidth: 1200,
-    backgroundColor: secondaryColor,
-    width: '80%',
-    fontSize: 18,
-    padding: 18,
-    borderRadius: 10,
-    color: mutedText,
-    ...universalStyles.normalShadow,
-  },
-  search_results_output_container: {
-    display: 'flex',
-    maxWidth: 1200,
-    width: '80%',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  search_result_item_container: {
-    width: '49%',
-    margin: 'auto',
-    backgroundColor: secondaryColor,
-    marginBottom: 4,
-    borderRadius: 10,
-    ...universalStyles.normalShadow,
-  },
-  search_result_item_container_padded: {
-    width: '49%',
-    margin: 'auto',
-    backgroundColor: secondaryColor,
-    marginBottom: 4,
-    borderRadius: 10,
-    padding: 10,
-    aspectRatio: 0.7,
-    justifyContent: 'center',
-  },
-  search_result_item_text: {
-    ...universalStyles.search_result_item_text,
-  },
-  search_result_item_image: {
-    ...universalStyles.search_result_item_image,
-  },
-  modalBackground: {
-    ...universalStyles.modalBackground,
-  },
-  modalBody: {
-    ...universalStyles.modalBody,
-    width: '75%',
-    height: '85%',
-  },
-  modalHeader: {
-    ...universalStyles.modalHeader,
-  },
-  modalText: {
-    ...universalStyles.modalText,
-  },
-  modalCloseText: {
-    ...universalStyles.modalCloseText,
-  },
-});
-
-const stylesL = StyleSheet.create({
-  body_container: {
-    ...universalStyles.body_container,
-  },
-  show_type_switch_container: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    maxWidth: 1200,
-    width: '80%',
-    padding: 30,
-    paddingTop: 20,
-    paddingBottom: 20,
-    margin: 20,
-    gap: 20,
-    backgroundColor: secondaryColor,
-    borderRadius: 10,
-    ...universalStyles.normalShadow,
-  },
-  show_type_switch_button: {
-    padding: 8,
-    backgroundColor: 'transparent',
-    borderRadius: 5,
-    width: '50%',
-    borderColor: buttonColor,
-    borderWidth: 2,
-  },
-  show_type_switch_button_text: {
-    fontSize: 18,
-    color: buttonColor,
-    textAlign: 'center',
-  },
-  search_input: {
-    maxWidth: 1200,
-    backgroundColor: secondaryColor,
-    width: '80%',
-    fontSize: 18,
-    padding: 18,
-    borderRadius: 10,
-    color: mutedText,
-    ...universalStyles.normalShadow,
-  },
-  search_results_output_container: {
-    display: 'flex',
-    maxWidth: 1200,
-    width: '80%',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  search_result_item_container: {
-    width: '32%',
-    margin: 'auto',
-    backgroundColor: secondaryColor,
-    marginBottom: 4,
-    borderRadius: 10,
-    ...universalStyles.normalShadow,
-  },
-  search_result_item_container_padded: {
-    width: '32%',
-    margin: 'auto',
-    backgroundColor: secondaryColor,
-    marginBottom: 4,
-    borderRadius: 10,
-    padding: 10,
-    aspectRatio: 0.7,
-    justifyContent: 'center',
-  },
-  search_result_item_text: {
-    ...universalStyles.search_result_item_text,
-  },
-  search_result_item_image: {
-    ...universalStyles.search_result_item_image,
-  },
-  modalBackground: {
-    ...universalStyles.modalBackground,
-  },
-  modalBody: {
-    ...universalStyles.modalBody,
-    width: '60%',
-    height: '60%',
-  },
-  modalHeader: {
-    ...universalStyles.modalHeader,
-  },
-  modalText: {
-    ...universalStyles.modalText,
-  },
-  modalCloseText: {
-    ...universalStyles.modalCloseText,
-  },
-});
-
-const stylesXL = StyleSheet.create({
-  body_container: {
-    ...universalStyles.body_container,
-  },
-  show_type_switch_container: {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    maxWidth: 1200,
-    width: '80%',
-    padding: 30,
-    paddingTop: 20,
-    paddingBottom: 20,
-    margin: 20,
-    gap: 20,
-    backgroundColor: secondaryColor,
-    borderRadius: 10,
-    ...universalStyles.normalShadow,
-  },
-  show_type_switch_button: {
-    padding: 8,
-    backgroundColor: 'transparent',
-    borderRadius: 5,
-    width: '50%',
-    borderColor: buttonColor,
-    borderWidth: 2,
-  },
-  show_type_switch_button_text: {
-    fontSize: 18,
-    color: buttonColor,
-    textAlign: 'center',
-  },
-  search_input: {
-    maxWidth: 1200,
-    backgroundColor: secondaryColor,
-    width: '80%',
-    fontSize: 18,
-    padding: 18,
-    borderRadius: 10,
-    color: mutedText,
-    ...universalStyles.normalShadow,
-  },
-  search_results_output_container: {
-    display: 'flex',
-    maxWidth: 1200,
-    width: '80%',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  search_result_item_container: {
-    width: '24%',
-    margin: 'auto',
-    backgroundColor: secondaryColor,
-    marginBottom: 4,
-    borderRadius: 10,
-    ...universalStyles.normalShadow,
-  },
-  search_result_item_container_padded: {
-    width: '24%',
-    margin: 'auto',
-    backgroundColor: secondaryColor,
-    marginBottom: 4,
-    borderRadius: 10,
-    padding: 10,
-    aspectRatio: 0.7,
-    justifyContent: 'center',
-  },
-  search_result_item_text: {
-    ...universalStyles.search_result_item_text,
-  },
-  search_result_item_image: {
-    ...universalStyles.search_result_item_image,
-  },
-  modalBackground: {
-    ...universalStyles.modalBackground,
-  },
-  modalBody: {
-    ...universalStyles.modalBody,
-    width: '60%',
-    height: '60%',
-  },
-  modalHeader: {
-    ...universalStyles.modalHeader,
-  },
-  modalText: {
-    ...universalStyles.modalText,
-  },
-  modalCloseText: {
-    ...universalStyles.modalCloseText,
-  },
-});
