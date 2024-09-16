@@ -11,11 +11,15 @@ const normalShadow = {
 };
 
 export const universalStyles = StyleSheet.create({
+  scroll_container: {
+    backgroundColor,
+    overflow: 'scroll',
+    width: '99%',
+  },
   body_container: {
     height: '100%',
     backgroundColor,
     alignItems: 'center',
-    overflow: 'scroll',
   },
   divider: {
     width: '100%',
@@ -111,14 +115,16 @@ export const universalStyles = StyleSheet.create({
   },
   modalCloseText: {
     position: 'absolute',
+    alignSelf: 'flex-end',
     color: mutedText,
     fontSize: 40,
-    lineHeight: 25,
-    alignSelf: 'flex-end',
   },
 });
 
 export const stylesS = StyleSheet.create({
+  scroll_container: {
+    ...universalStyles.scroll_container,
+  },
   body_container: {
     ...universalStyles.body_container,
   },
@@ -183,6 +189,9 @@ export const stylesS = StyleSheet.create({
 });
 
 export const stylesM = StyleSheet.create({
+  scroll_container: {
+    ...universalStyles.scroll_container,
+  },
   body_container: {
     ...universalStyles.body_container,
   },
@@ -248,6 +257,9 @@ export const stylesM = StyleSheet.create({
 });
 
 export const stylesL = StyleSheet.create({
+  scroll_container: {
+    ...universalStyles.scroll_container,
+  },
   body_container: {
     ...universalStyles.body_container,
   },
@@ -313,6 +325,9 @@ export const stylesL = StyleSheet.create({
 });
 
 export const stylesXL = StyleSheet.create({
+  scroll_container: {
+    ...universalStyles.scroll_container,
+  },
   body_container: {
     ...universalStyles.body_container,
   },

@@ -10,6 +10,7 @@ import {
   Modal,
   TouchableOpacity,
   Alert,
+  ScrollView,
 } from 'react-native';
 
 import { buttonColor } from '~/constants/colours';
@@ -18,7 +19,7 @@ import { stylesS, stylesM, stylesL, stylesXL, universalStyles } from '~/constant
 import { searchForShows, convertGenreIdsToNames } from '~/constants/tmdb';
 
 export default function App() {
-  const [styles, setStyles] = React.useState(stylesL);
+  const [styles, setStyles] = React.useState(stylesXL);
   const [numColumns, setNumColumns] = React.useState(3);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [searchResults, setSearchResults] = React.useState([]);
@@ -114,23 +115,24 @@ export default function App() {
   }, [searchTerm]);
 
   // Watches for a change in the window width and adjusts the styles accordingly
+  const windowDimensions = useWindowDimensions();
   React.useEffect(() => {
-    if (window.innerWidth < 600) {
+    if (windowDimensions.width < 600) {
       setNumColumns(1);
       setStyles(stylesS);
-    } else if (window.innerWidth < 992) {
+    } else if (windowDimensions.width < 992) {
       setNumColumns(2);
       setStyles(stylesM);
-    } else if (window.innerWidth < 1200) {
+    } else if (windowDimensions.width < 1200) {
       setNumColumns(3);
       setStyles(stylesL);
     } else {
       setNumColumns(4);
       setStyles(stylesXL);
     }
-  }, [useWindowDimensions().width]);
+  }, [windowDimensions.width]);
 
-  //
+  // Watches for a change in the loaded result data and displays the modal if it is loaded
   React.useEffect(() => {
     if (loadedResultData) {
       setResultModalVisible(true);
@@ -140,126 +142,127 @@ export default function App() {
   }, [loadedResultData]);
 
   return (
-    <View style={styles.body_container}>
-      <View style={styles.show_type_switch_container}>
-        <Modal
-          animationType="fade"
-          visible={resultModalVisible}
-          transparent
-          onRequestClose={() => {
-            Alert.alert('Modal has been closed.');
-            setSelectedResult({});
-            setResultModalVisible(!resultModalVisible);
-            setGenreData('');
-          }}>
-          <View style={styles.modalBackground}>
-            <View style={styles.modalBody}>
-              <Pressable
-                style={styles.modalCloseText}
-                onPress={() => {
-                  setSelectedResult({});
-                  setResultModalVisible(!resultModalVisible);
-                  setGenreData('');
-                }}>
-                &times;
-              </Pressable>
-              <Text style={{ ...styles.modalHeader, marginRight: 22 }}>
-                {selectedResult.title ||
-                  selectedResult.name ||
-                  selectedResult.original_title ||
-                  selectedResult.original_name}
-              </Text>
-              <View style={universalStyles.divider} />
-              <Text style={styles.modalHeader}>Release Date:</Text>
-              <Text style={styles.modalText}>
-                {DateFormatter(selectedResult.release_date || selectedResult.first_air_date)}
-              </Text>
-              <View style={universalStyles.divider} />
-              <Text style={styles.modalHeader}>Rating:</Text>
-              <Text style={styles.modalText}>
-                {parseFloat(selectedResult.vote_average).toFixed(1) || 'No rating available'}
-              </Text>
-              <View style={universalStyles.divider} />
-              <Text style={styles.modalHeader}>Genres:</Text>
-              <Text style={styles.modalText}>{genreData || 'No genres available'}</Text>
-              <View style={universalStyles.divider} />
-              <Text style={styles.modalHeader}>Overview:</Text>
-              <Text style={styles.modalText}>
-                {selectedResult.overview || 'No overview available'}
-              </Text>
+    <ScrollView style={styles.scroll_container}>
+      <View style={styles.body_container}>
+        <View style={styles.show_type_switch_container}>
+          <Modal
+            animationType="fade"
+            visible={resultModalVisible}
+            transparent
+            onRequestClose={() => {
+              Alert.alert('Modal has been closed.');
+              setSelectedResult({});
+              setResultModalVisible(!resultModalVisible);
+              setGenreData('');
+            }}>
+            <View style={styles.modalBackground}>
+              <View style={styles.modalBody}>
+                <Pressable
+                  onPress={() => {
+                    setSelectedResult({});
+                    setResultModalVisible(!resultModalVisible);
+                    setGenreData('');
+                  }}>
+                  <Text style={styles.modalCloseText}>&times;</Text>
+                </Pressable>
+                <Text style={{ ...styles.modalHeader, marginRight: 22 }}>
+                  {selectedResult.title ||
+                    selectedResult.name ||
+                    selectedResult.original_title ||
+                    selectedResult.original_name}
+                </Text>
+                <View style={universalStyles.divider} />
+                <Text style={styles.modalHeader}>Release Date:</Text>
+                <Text style={styles.modalText}>
+                  {DateFormatter(selectedResult.release_date || selectedResult.first_air_date)}
+                </Text>
+                <View style={universalStyles.divider} />
+                <Text style={styles.modalHeader}>Rating:</Text>
+                <Text style={styles.modalText}>
+                  {parseFloat(selectedResult.vote_average).toFixed(1) || 'No rating available'}
+                </Text>
+                <View style={universalStyles.divider} />
+                <Text style={styles.modalHeader}>Genres:</Text>
+                <Text style={styles.modalText}>{genreData || 'No genres available'}</Text>
+                <View style={universalStyles.divider} />
+                <Text style={styles.modalHeader}>Overview:</Text>
+                <Text style={styles.modalText}>
+                  {selectedResult.overview || 'No overview available'}
+                </Text>
+              </View>
             </View>
-          </View>
-        </Modal>
-        <Pressable
-          style={
-            movieTypeButtonHover || movieTypeButtonPressed
-              ? { ...styles.show_type_switch_button, backgroundColor: buttonColor }
-              : styles.show_type_switch_button
-          }
-          onHoverIn={() => setMovieTypeButtonHover(true)}
-          onHoverOut={() => setMovieTypeButtonHover(false)}
-          onPress={() => {
-            if (tvShowTypeButtonPressed) {
-              setTvShowTypeButtonPressed(false);
-            }
-            setMovieTypeButtonPressed(true);
-            setShowType('movie');
-          }}>
-          <Text
+          </Modal>
+          <Pressable
             style={
               movieTypeButtonHover || movieTypeButtonPressed
-                ? { ...styles.show_type_switch_button_text, color: '#fff' }
-                : styles.show_type_switch_button_text
-            }>
-            Movies
-          </Text>
-        </Pressable>
-        <Pressable
-          style={
-            tvShowTypeButtonHover || tvShowTypeButtonPressed
-              ? { ...styles.show_type_switch_button, backgroundColor: buttonColor }
-              : styles.show_type_switch_button
-          }
-          onHoverIn={() => setTvShowTypeButtonHover(true)}
-          onHoverOut={() => setTvShowTypeButtonHover(false)}
-          onPress={() => {
-            if (movieTypeButtonPressed) {
-              setMovieTypeButtonPressed(false);
+                ? { ...styles.show_type_switch_button, backgroundColor: buttonColor }
+                : styles.show_type_switch_button
             }
-            setTvShowTypeButtonPressed(true);
-            setShowType('tv');
-          }}>
-          <Text
+            onHoverIn={() => setMovieTypeButtonHover(true)}
+            onHoverOut={() => setMovieTypeButtonHover(false)}
+            onPress={() => {
+              if (tvShowTypeButtonPressed) {
+                setTvShowTypeButtonPressed(false);
+              }
+              setMovieTypeButtonPressed(true);
+              setShowType('movie');
+            }}>
+            <Text
+              style={
+                movieTypeButtonHover || movieTypeButtonPressed
+                  ? { ...styles.show_type_switch_button_text, color: '#fff' }
+                  : styles.show_type_switch_button_text
+              }>
+              Movies
+            </Text>
+          </Pressable>
+          <Pressable
             style={
               tvShowTypeButtonHover || tvShowTypeButtonPressed
-                ? { ...styles.show_type_switch_button_text, color: '#fff' }
-                : styles.show_type_switch_button_text
-            }>
-            TV-Shows
-          </Text>
-        </Pressable>
+                ? { ...styles.show_type_switch_button, backgroundColor: buttonColor }
+                : styles.show_type_switch_button
+            }
+            onHoverIn={() => setTvShowTypeButtonHover(true)}
+            onHoverOut={() => setTvShowTypeButtonHover(false)}
+            onPress={() => {
+              if (movieTypeButtonPressed) {
+                setMovieTypeButtonPressed(false);
+              }
+              setTvShowTypeButtonPressed(true);
+              setShowType('tv');
+            }}>
+            <Text
+              style={
+                tvShowTypeButtonHover || tvShowTypeButtonPressed
+                  ? { ...styles.show_type_switch_button_text, color: '#fff' }
+                  : styles.show_type_switch_button_text
+              }>
+              TV-Shows
+            </Text>
+          </Pressable>
+        </View>
+        <TextInput
+          style={
+            searchTerm.length !== 0 ? { ...styles.search_input, color: '#fff' } : styles.search_input
+          }
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+          placeholder="Search for a movie or TV show..."
+        />
+        <FlatList
+          key={numColumns}
+          style={{ ...styles.search_results_output_container, overflow: 'visible' }}
+          numColumns={numColumns}
+          data={searchResults}
+          contentContainerStyle={{ display: 'flex', gap: 10, justifyContent: 'center' }}
+          ListEmptyComponent={
+            <Text style={{ color: '#fff', textAlign: 'center' }}>
+              {searchTerm.length === 0 ? 'No search term provided' : 'No results found'}
+            </Text>
+          }
+          renderItem={renderSearchResults}
+        />
       </View>
-      <TextInput
-        style={
-          searchTerm.length !== 0 ? { ...styles.search_input, color: '#fff' } : styles.search_input
-        }
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-        placeholder="Search for a movie or TV show..."
-      />
-      <FlatList
-        key={numColumns}
-        style={{ ...styles.search_results_output_container, overflow: 'visible' }}
-        numColumns={numColumns}
-        data={searchResults}
-        contentContainerStyle={{ display: 'flex', gap: 10, justifyContent: 'center' }}
-        ListEmptyComponent={
-          <Text style={{ color: '#fff', textAlign: 'center' }}>
-            {searchTerm.length === 0 ? 'No search term provided' : 'No results found'}
-          </Text>
-        }
-        renderItem={renderSearchResults}
-      />
-    </View>
+    </ScrollView>
   );
 }
