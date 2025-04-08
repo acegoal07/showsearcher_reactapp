@@ -9,7 +9,6 @@ import {
   Image,
   Modal,
   TouchableOpacity,
-  Alert,
   ScrollView,
 } from 'react-native';
 
@@ -29,7 +28,20 @@ export default function App() {
   const [tvShowTypeButtonPressed, setTvShowTypeButtonPressed] = React.useState(false);
   const [showType, setShowType] = React.useState('movie');
   const [resultModalVisible, setResultModalVisible] = React.useState(false);
-  const [selectedResult, setSelectedResult] = React.useState({});
+  interface Result {
+    title?: string;
+    name?: string;
+    original_title?: string;
+    original_name?: string;
+    release_date?: string;
+    first_air_date?: string;
+    vote_average?: number;
+    overview?: string;
+    genre_ids?: number[];
+    poster_path?: string;
+  }
+
+  const [selectedResult, setSelectedResult] = React.useState<Result | null>(null);
   const [genreData, setGenreData] = React.useState('');
   const [loadedResultData, setLoadedResultData] = React.useState(false);
 
@@ -150,7 +162,6 @@ export default function App() {
             visible={resultModalVisible}
             transparent
             onRequestClose={() => {
-              Alert.alert('Modal has been closed.');
               setSelectedResult({});
               setResultModalVisible(!resultModalVisible);
               setGenreData('');
@@ -166,20 +177,22 @@ export default function App() {
                   <Text style={styles.modalCloseText}>&times;</Text>
                 </Pressable>
                 <Text style={{ ...styles.modalHeader, marginRight: 22 }}>
-                  {selectedResult.title ||
-                    selectedResult.name ||
-                    selectedResult.original_title ||
-                    selectedResult.original_name}
+                  {selectedResult?.title ??
+                    selectedResult?.name ??
+                    selectedResult?.original_title ??
+                    selectedResult?.original_name}
                 </Text>
                 <View style={universalStyles.divider} />
                 <Text style={styles.modalHeader}>Release Date:</Text>
                 <Text style={styles.modalText}>
-                  {DateFormatter(selectedResult.release_date || selectedResult.first_air_date)}
+                  {selectedResult?.overview ?? 'No overview available'}
                 </Text>
                 <View style={universalStyles.divider} />
                 <Text style={styles.modalHeader}>Rating:</Text>
                 <Text style={styles.modalText}>
-                  {parseFloat(selectedResult.vote_average).toFixed(1) || 'No rating available'}
+                  {selectedResult?.vote_average !== undefined
+                    ? parseFloat(selectedResult.vote_average.toString()).toFixed(1)
+                    : 'No rating available'}
                 </Text>
                 <View style={universalStyles.divider} />
                 <Text style={styles.modalHeader}>Genres:</Text>
@@ -187,7 +200,7 @@ export default function App() {
                 <View style={universalStyles.divider} />
                 <Text style={styles.modalHeader}>Overview:</Text>
                 <Text style={styles.modalText}>
-                  {selectedResult.overview || 'No overview available'}
+                  {selectedResult?.overview ?? 'No overview available'}
                 </Text>
               </View>
             </View>
@@ -243,7 +256,9 @@ export default function App() {
         </View>
         <TextInput
           style={
-            searchTerm.length !== 0 ? { ...styles.search_input, color: '#fff' } : styles.search_input
+            searchTerm.length !== 0
+              ? { ...styles.search_input, color: '#fff' }
+              : styles.search_input
           }
           value={searchTerm}
           onChangeText={setSearchTerm}
