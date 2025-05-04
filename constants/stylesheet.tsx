@@ -1,13 +1,29 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 import { backgroundColor, secondaryColor, mutedText, buttonColor } from './colours';
 
 const normalShadow = {
-  shadowColor: '#000',
-  shadowOffset: { width: 1, height: 3 },
-  shadowOpacity: 0.25,
-  shadowRadius: 3.84,
-  elevation: 5,
+  ...Platform.select({
+    ios: {
+      shadowColor: '#000',
+      shadowOffset: { width: 1, height: 3 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+    },
+    android: {
+      elevation: 5,
+    },
+    web: {
+      boxShadow: '1px 3px 3.84px rgba(0, 0, 0, 0.25)',
+    },
+    default: {
+      shadowColor: '#000',
+      shadowOffset: { width: 1, height: 3 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+  }),
 };
 
 export const universalStyles = StyleSheet.create({
@@ -31,7 +47,6 @@ export const universalStyles = StyleSheet.create({
   show_type_switch_container: {
     ...normalShadow,
     display: 'flex',
-    flexDirection: 'row',
     justifyContent: 'center',
     maxWidth: 1200,
     backgroundColor: secondaryColor,
@@ -121,6 +136,7 @@ export const universalStyles = StyleSheet.create({
     fontSize: 40,
   },
 });
+
 export const stylesS = StyleSheet.create({
   scroll_container: {
     ...universalStyles.scroll_container,

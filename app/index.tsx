@@ -57,9 +57,9 @@ export default function App() {
   /**
    * Renders the search results
    * @param {any} item The item to render
-   * @returns {JSX.Element} The search result
+   * @returns {React.JSX.Element} The search result
    */
-  const renderSearchResults = ({ item }: any): JSX.Element => {
+  const renderSearchResults = ({ item }: any): React.JSX.Element => {
     if (!item.poster_path) {
       return (
         <View style={styles.search_result_item_container_padded}>
@@ -76,10 +76,10 @@ export default function App() {
                 fontSize: 25,
                 color: '#fff',
               }}>
-              {item.title || item.name || item.original_title || item.original_name}
+              {item.title ?? item.name ?? item.original_title ?? item.original_name}
             </Text>
             <Text style={styles.search_result_item_text}>
-              {DateFormatter(item.release_date || item.first_air_date)}
+              {DateFormatter(item.release_date ?? item.first_air_date)}
             </Text>
             <Text style={styles.search_result_item_text}>
               {item.overview ? `${item.overview.substring(0, 150)} ...` : 'No overview available'}
@@ -103,7 +103,7 @@ export default function App() {
               source={{
                 uri: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
               }}
-              alt={item.title || item.name || item.original_title || item.original_name}
+              alt={item.title ?? item.name ?? item.original_title ?? item.original_name}
               referrerPolicy="no-referrer"
             />
           </TouchableOpacity>
